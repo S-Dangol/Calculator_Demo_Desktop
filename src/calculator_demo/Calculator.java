@@ -234,6 +234,7 @@ public class Calculator extends javax.swing.JFrame {
 
         jLabel1.setFont(new java.awt.Font("Consolas", 0, 12)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(153, 51, 255));
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel1.setToolTipText("");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -289,12 +290,11 @@ public class Calculator extends javax.swing.JFrame {
                                     .addComponent(jBtnPlus, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(22, 22, 22)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(textField, javax.swing.GroupLayout.PREFERRED_SIZE, 349, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jRadioOff)
-                                .addComponent(jRadioOn)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(textField, javax.swing.GroupLayout.PREFERRED_SIZE, 349, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jRadioOff)
+                            .addComponent(jRadioOn)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 349, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addGap(20, 20, 20))
         );
@@ -437,19 +437,16 @@ public class Calculator extends javax.swing.JFrame {
 
     private void jBtnEqualsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBtnEqualsActionPerformed
 //        arithmetic_operation();
-//        num = Double.parseDouble(textField.getText());
         history = textField.getText();
-        history2 = history2 + "|" + history;
+        history2 = history2 + " || " + history;
         jLabel1.setText(history2 + "");
-
-        textField.setText("");
+        String exp = history;
+        String infixed = String.valueOf(Cal.infixToPreFix(exp));
+        
+        String result = String.valueOf(Cal.evaluatePrefix(infixed));
         history = "";
-
-        CalDemo.solve_this(history);
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-//        String finalString = new String(CalDemo.toByteArray());
-        answer = "";
-        textField.setText(history);
+        String zxc = String.valueOf(result);
+        textField.setText(zxc);
 
 
     }//GEN-LAST:event_jBtnEqualsActionPerformed
@@ -590,96 +587,127 @@ public class Calculator extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 }
 
-class CalDemo {
+class Cal {
 
-    public static int solve_this(String expression) {
-        char[] ar_tok = expression.toCharArray();
-// This is the Stack for numbers, our values
-        Stack<Integer> values = new Stack<Integer>();
-// This Stack is for our Operators called 'sta_obj' 
-        Stack<Character> sta_obj = new Stack<Character>();
-        for (int i = 0; i < ar_tok.length; i++) {
-// Our present token is a whitespace? so skip it
-            if (ar_tok[i] == ' ') {
-                continue;
-            }
-// Our token is a number? push it onto the stack for numbers 
-            if (ar_tok[i] >= '0' && ar_tok[i] <= '9') {
-                StringBuffer buff_s = new StringBuffer();
-// Incase the number has more than one digit
-                while (i < ar_tok.length && ar_tok[i] >= '0' && ar_tok[i] <= '9') {
-                    buff_s.append(ar_tok[i++]);
-                }
-                values.push(Integer.parseInt(buff_s.toString()));
-            } // Our token is an opening bracket? push it onto 'sta_obj' 
-            else if (ar_tok[i] == '(') {
-                sta_obj.push(ar_tok[i]);
-            } // Once we meet the closing bracket , solve the complete bracket 
-            else if (ar_tok[i] == ')') {
-                while (sta_obj.peek() != '(') {
-                    values.push(applyOp(sta_obj.pop(), values.pop(), values.pop()));
-                }
-                sta_obj.pop();
-            } // Incase the token is an operator 
-            else if (ar_tok[i] == '+' || ar_tok[i] == '-'
-                    || ar_tok[i] == '*' || ar_tok[i] == '/') {
-// While top of 'sta_obj' has same or greater precedence to current 
-// token, which is an operator. Apply operator on top of 'sta_obj' 
-// to bring on top two elements in the values stack.
-                while (!sta_obj.empty() && hasPrecedence(ar_tok[i], sta_obj.peek())) {
-                    values.push(applyOp(sta_obj.pop(), values.pop(), values.pop()));
-                }
-// Pushing the token onto 'sta_obj'. 
-                sta_obj.push(ar_tok[i]);
-            }
-        }
-// Now that the expression is parsed, we'll use the rest of
-// sta_obj for the remaining values 
-        while (!sta_obj.empty()) {
-            values.push(applyOp(sta_obj.pop(), values.pop(), values.pop()));
-        }
-// If the top of 'values' has the result, simply return it 
-        return values.pop();
-    }
-// True is returned if 'oper_2' has higher or same precedence as 'oper_1', 
-// else false is returned 
-
-    public static boolean hasPrecedence(char oper_1, char oper_2) {
-        if (oper_2 == '(' || oper_2 == ')') {
-            return false;
-        }
-        if ((oper_1 == '*' || oper_1 == '/') && (oper_2 == '+' || oper_2 == '-')) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    // Here's a utility method for applying an operator 'oper' on the operands 'var1' and 'var2' 
-    public static int applyOp(char oper, int var2, int var1) {
-        switch (oper) {
+    static int precedence(char c) {
+        switch (c) {
             case '+':
-                return var1 + var2;
             case '-':
-                return var1 - var2;
+                return 1;
             case '*':
-                return var1 * var2;
             case '/':
-                if (var2 == 0) {
-                    throw new ArithmeticException("division by zero.. immpossible!");
-                }
-                return var1 / var2;
+                return 2;
+            case '^':
+                return 3;
         }
-        return 0;
+        return -1;
     }
 
-// Main section 
-    public static void main(String[] args) {
-        System.out.println("******OUTPUTS******");
-        System.out.println(CalDemo.solve_this("50 + 5 * (70/70)"));
-//System.out.println(BOD_Calc.solve_this("50 + 5 * 70/70")); 
-//System.out.println(BOD_Calc.solve_this("100 + 5 * 30")); 
-//System.out.println(BOD_Calc.solve_this("100 * ( 5 + 30 ) "));
-//System.out.println(BOD_Calc.solve_this("100 / 0"));
+    static StringBuilder infixToPreFix(String expression) {
+
+        StringBuilder result = new StringBuilder();
+        StringBuilder input = new StringBuilder(expression);
+        input.reverse();
+        Stack<Character> stack = new Stack<Character>();
+
+        char[] charsExp = new String(input).toCharArray();
+        for (int i = 0; i < charsExp.length; i++) {
+
+            if (charsExp[i] == '(') {
+                charsExp[i] = ')';
+                i++;
+            } else if (charsExp[i] == ')') {
+                charsExp[i] = '(';
+                i++;
+            }
+        }
+        for (int i = 0; i < charsExp.length; i++) {
+            char c = charsExp[i];
+
+            //check if char is operator or operand
+            if (precedence(c) > 0) {
+                while (stack.isEmpty() == false && precedence(stack.peek()) >= precedence(c)) {
+                    result.append(stack.pop());
+                }
+                stack.push(c);
+            } else if (c == ')') {
+                char x = stack.pop();
+                while (x != '(') {
+                    result.append(x);
+                    x = stack.pop();
+                }
+            } else if (c == '(') {
+                stack.push(c);
+            } else {
+                //character is neither operator nor "("
+                result.append(c);
+            }
+        }
+
+        for (int i = 0; i <= stack.size(); i++) {
+            result.append(stack.pop());
+        }
+        return result.reverse();
     }
-}
+
+//    public static void main(String[] args) {
+//        String exp = "3+2*(4/2-2)";
+//        System.out.println("Infix Expression: " + exp);
+//        System.out.println("Prefix Expression: " + infixToPreFix(exp));
+//        String infixed = String.valueOf(infixToPreFix(exp));
+//        System.out.println();
+//        System.out.println("Solved: " + evaluatePrefix(infixed));
+//    }
+    // Java program to evaluate
+// a prefix expression.
+
+    static Boolean isOperand(char c) {
+        // If the character is a digit
+        // then it must be an operand
+        if (c >= 48 && c <= 57) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    static double evaluatePrefix(String exprsn) {
+        Stack<Double> Stack = new Stack<Double>();
+
+        for (int j = exprsn.length() - 1; j >= 0; j--) {
+
+            // Push operand to Stack
+            // To convert exprsn[j] to digit subtract
+            // '0' from exprsn[j].
+            if (isOperand(exprsn.charAt(j))) {
+                Stack.push((double) (exprsn.charAt(j) - 48));
+            } else {
+
+                // Operator encountered
+                // Pop two elements from Stack
+                double o1 = Stack.peek();
+                Stack.pop();
+                double o2 = Stack.peek();
+                Stack.pop();
+
+                // Use switch case to operate on o1
+                // and o2 and perform o1 O o2.
+                switch (exprsn.charAt(j)) {
+                    case '+':
+                        Stack.push(o1 + o2);
+                        break;
+                    case '-':
+                        Stack.push(o1 - o2);
+                        break;
+                    case '*':
+                        Stack.push(o1 * o2);
+                        break;
+                    case '/':
+                        Stack.push(o1 / o2);
+                        break;
+                }
+            }
+        }
+
+        return Stack.peek();
+    }}
